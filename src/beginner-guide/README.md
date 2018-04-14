@@ -19,7 +19,7 @@ nginx -s signal
 - `reload` 重新加载配置文件
 - `reopen` 重新打开日志文件
 
-比如，假如要在 worker 进程处理完当前请求之后，关闭 nginx 进程，可以使用：
+比如，在 worker 进程处理完当前请求之后，关闭 nginx 进程，可以使用：
 
 ```sh
 nginx -s quit
@@ -56,7 +56,7 @@ nginx 由模块组成，模块行为受配置文件的指令控制。指令分�
 
 ## 托管静态内容
 
-首先，创建 `/data/www` 目录，并放置一个 `index.html` 文件；创建 `/data/image` 目录，防止一些图片。
+首先，创建 `/data/www` 目录，并放置一个 `index.html` 文件；创建 `/data/image` 目录，放入一些图片。
 
 然后，打开配置文件，增加一个新的 `server` 块：
 
@@ -92,7 +92,7 @@ server {
 
 注意，上面的 `root` 位于 `server` 内。当匹配的 `location` 中不包含 `root` 指令时，会使用该 `root` 值。之后，`http://localhost:8080` 就可以作为上游服务器（即被代理的服务器）。
 
-然后，使用上一个板块的服务器设置，将其修改为代理服务器。在第一个 `location` 中，增加 `proxy_pass` 指令：
+然后，使用上一个小节的服务器设置，将其修改为代理服务器。在第一个 `location` 中，增加 `proxy_pass` 指令：
 
 ```
 server {
@@ -136,7 +136,21 @@ nginx 可以把请求路由转发到 FastCGI 服务器。
 
 最简单的 nginx 设置可以使用 `fastcgi_pass` 指令代替 `proxy_pass`。使用 `fastcgi_param` 指令设定参数传递到 FastCGI 服务器。
 
-（未完待续。。。）
+假设 FastCGI 服务运行在 `localhost:9000`，以上面代理服务器为基础，将 `proxy_pass` 替换为 `fastcgi_pass`，把参数替换为 `localhost:9000`。在 PHP 中，`SCRIPT_FILENAME` 用来表示脚本名称，`QUERY_STRING` 表示请求参数，最终配置文件如下：
+
+```
+server {
+    location / {
+        fastcgi_pass localhost:9000;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param QUERY_STRING $query_string;
+    }
+
+    location ~ \.(gif|jpg|png)$ {
+        root /data/images;
+    }
+}
+```
 
 ## REF
 
